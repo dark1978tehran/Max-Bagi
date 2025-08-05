@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PickUp - Order & Collect</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="PickUp">
+    <meta name="description" content="Order food and products for easy pickup">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json,{
+        'name': 'PickUp - Order & Collect',
+        'short_name': 'PickUp',
+        'description': 'Order food and products for easy pickup',
+        'start_url': '/',
+        'display': 'standalone',
+        'background_color': '#ffffff',
+        'theme_color': '#667eea',
+        'orientation': 'portrait',
+        'icons': [
+            {
+                'src': 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'90\'>🛍️</text></svg>',
+                'sizes': '192x192',
+                'type': 'image/svg+xml'
+            },
+            {
+                'src': 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'><text y=\'.9em\' font-size=\'90\'>🛍️</text></svg>',
+                'sizes': '512x512',
+                'type': 'image/svg+xml'
+            }
+        ]
+    }">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: calc(100vh - 20px);
+            position: relative;
+        }
+        
+        .screen {
+            display: none;
+            padding: 30px;
+            min-height: calc(100vh - 20px);
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .logo h1 {
+            color: #667eea;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .logo p {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+            -webkit-appearance: none;
+            appearance: none;
+            touch-action: manipulation;
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e1e5e9;
+        }
+        
+        .header h2 {
+            color: #333;
+            font-size: 1.5rem;
+        }
+        
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #667eea;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            touch-action: manipulation;
+        }
+        
+        .logout-btn:active {
+            background-color: #f0f2ff;
+        }
+        
+        .product-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .product-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 2px solid transparent;
+            touch-action: manipulation;
+        }
+        
+        .product-card:active {
+            transform: scale(0.95);
+        }
+        
+        .product-card.selected {
+            border-color: #667eea;
+            background: #f0f2ff;
+        }
+        
+        .product-emoji {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .product-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .product-price {
+            color: #667eea;
+            font-weight: 700;
+        }
+        
+        .cart-summary {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .cart-total {
+            border-top: 1px solid #e1e5e9;
+            padding-top: 15px;
+            margin-top: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: none;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        .quantity-btn:active {
+            transform: scale(0.9);
+        }
+        
+        .pickup-info {
+            background: #e8f5e8;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .pickup-info h3 {
+            color: #2d5a2d;
+            margin-bottom: 10px;
+        }
+        
+        .pickup-time {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #2d5a2d;
+        }
+        
+        .order-number {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .success-icon {
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .install-prompt button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+        
+        .status-bar {
+            height: env(safe-area-inset-top);
+            background: #667eea;
+        }
+        
+        @media (display-mode: standalone) {
+            body {
+                padding-top: env(safe-area-inset-top);
+                padding-bottom: env(safe-area-inset-bottom);
+            }
+        }
+        
+        /* Prevent zoom on input focus */
+        @media screen and (max-width: 767px) {
+            .form-group input {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="status-bar"></div>
+    
+    <div class="app-container">
+        <!-- Login Screen -->
+        <div class="screen active" id="loginScreen">
+            <div class="logo">
+                <h1>🛍️ PickUp</h1>
+                <p>Order & Collect with Ease</p>
+            </div>
+            
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn">Sign In</button>
+                <button type="button" class="btn btn-secondary" onclick="showDemo()">Demo Mode</button>
+            </form>
+        </div>
+        
+        <!-- Products Screen -->
+        <div class="screen" id="productsScreen">
+            <div class="header">
+                <h2>Our Menu</h2>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+            
+            <div class="product-grid">
+                <div class="product-card" onclick="addToCart('coffee', 'Fresh Coffee', 4.50)">
+                    <div class="product-emoji">☕</div>
+                    <div class="product-name">Fresh Coffee</div>
+                    <div class="product-price">$4.50</div>
+                </div>
+                
+                <div class="product-card" onclick="addToCart('sandwich', 'Club Sandwich', 8.99)">
+                    <div class="product-emoji">🥪</div>
+                    <div class="product-name">Club Sandwich</div>
+                    <div class="product-price">$8.99</div>
+                </div>
+                
+                <div class="product-card" onclick="addToCart('salad', 'Caesar Salad', 7.25)">
+                    <div class="product-emoji">🥗</div>
+                    <div class="product-name">Caesar Salad</div>
+                    <div class="product-price">$7.25</div>
+                </div>
+                
+                <div class="product-card" onclick="addToCart('muffin', 'Blueberry Muffin', 3.75)">
+                    <div class="product-emoji">🧁</div>
+                    <div class="product-name">Blueberry Muffin</div>
+                    <div class="product-price">$3.75</div>
+                </div>
+                
+                <div class="product-card" onclick="addToCart('juice', 'Fresh Juice', 5.50)">
+                    <div class="product-emoji">🧃</div>
+                    <div class="product-name">Fresh Juice</div>
+                    <div class="product-price">$5.50</div>
+                </div>
+                
+                <div class="product-card" onclick="addToCart('bagel', 'Everything Bagel', 4.25)">
+                    <div class="product-emoji">🥯</div>
+                    <div class="product-name">Everything Bagel</div>
+                    <div class="product-price">$4.25</div>
+                </div>
+            </div>
+            
+            <div class="cart-summary" id="cartSummary" style="display: none;">
+                <h3>Your Order</h3>
+                <div id="cartItems"></div>
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cartTotal">$0.00</span>
+                </div>
+            </div>
+            
+            <button class="btn" id="checkoutBtn" onclick="checkout()" style="display: none;">
+                Place Order for Pickup
+            </button>
+        </div>
+        
+        <!-- Confirmation Screen -->
+        <div class="screen" id="confirmationScreen">
+            <div class="success-icon">✅</div>
+            
+            <div class="order-number">
+                <h3>Order Confirmed!</h3>
+                <p>Order #<span id="orderNumber"></span></p>
+            </div>
+            
+            <div class="pickup-info">
+                <h3>Ready for Pickup</h3>
+                <div class="pickup-time" id="pickupTime"></div>
+                <p>Please show this screen when collecting your order</p>
+            </div>
+            
+            <button class="btn" onclick="newOrder()">Place Another Order</button>
+            <button class="btn btn-secondary" onclick="logout()">Sign Out</button>
+        </div>
+    </div>
+    
+    <!-- Install Prompt -->
+    <div class="install-prompt" id="installPrompt">
+        <p><strong>Install PickUp App</strong></p>
+        <p>Add to your home screen for quick access!</p>
+        <button onclick="installApp()">Install</button>
+        <button onclick="dismissInstall()">Later</button>
+    </div>
+
+    <script>
+        let cart = {};
+        let cartTotal = 0;
+        let deferredPrompt;
+        
+        // PWA Installation
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallPrompt();
+        });
+        
+        function showInstallPrompt() {
+            document.getElementById('installPrompt').style.display = 'block';
+        }
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                    dismissInstall();
+                });
+            }
+        }
+        
+        function dismissInstall() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swScript = `
+                    const CACHE_NAME = 'pickup-app-v1';
+                    const urlsToCache = ['/'];
+                    
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                    });
+                    
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => {
+                                    return response || fetch(event.request);
+                                })
+                        );
+                    });
+                `;
+                
+                const blob = new Blob([swScript], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                
+                navigator.serviceWorker.register(swUrl)
+                    .then((registration) => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch((registrationError) => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+        
+        // Login functionality
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (email && password) {
+                showScreen('productsScreen');
+            }
+        });
+        
+        function showDemo() {
+            showScreen('productsScreen');
+        }
+        
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+        
+        function addToCart(id, name, price) {
+            if (cart[id]) {
+                cart[id].quantity += 1;
+            } else {
+                cart[id] = {
+                    name: name,
+                    price: price,
+                    quantity: 1
+                };
+            }
+            updateCartDisplay();
+            
+            // Haptic feedback if available
+            if (navigator.vibrate) {
+                navigator.vibrate(50);
+            }
+            
+            // Visual feedback
+            event.target.closest('.product-card').classList.add('selected');
+            setTimeout(() => {
+                event.target.closest('.product-card').classList.remove('selected');
+            }, 300);
+        }
+        
+        function removeFromCart(id) {
+            if (cart[id]) {
+                cart[id].quantity -= 1;
+                if (cart[id].quantity <= 0) {
+                    delete cart[id];
+                }
+            }
+            updateCartDisplay();
+        }
+        
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            const cartSummary = document.getElementById('cartSummary');
+            const checkoutBtn = document.getElementById('checkoutBtn');
+            const cartTotalElement = document.getElementById('cartTotal');
+            
+            cartItems.innerHTML = '';
+            cartTotal = 0;
+            
+            const itemCount = Object.keys(cart).length;
+            
+            if (itemCount === 0) {
+                cartSummary.style.display = 'none';
+                checkoutBtn.style.display = 'none';
+                return;
+            }
+            
+            cartSummary.style.display = 'block';
+            checkoutBtn.style.display = 'block';
+            
+            for (let id in cart) {
+                const item = cart[id];
+                const itemTotal = item.price * item.quantity;
+                cartTotal += itemTotal;
+                
+                const cartItem = document.createElement('div');
+                cartItem.className = 'cart-item';
+                cartItem.innerHTML = `
+                    <span>${item.name}</span>
+                    <div class="quantity-controls">
+                        <button class="quantity-btn" onclick="removeFromCart('${id}')">-</button>
+                        <span>${item.quantity}</span>
+                        <button class="quantity-btn" onclick="addToCart('${id}', '${item.name}', ${item.price})">+</button>
+                        <span style="margin-left: 10px;">$${itemTotal.toFixed(2)}</span>
+                    </div>
+                `;
+                cartItems.appendChild(cartItem);
+            }
+            
+            cartTotalElement.textContent = `$${cartTotal.toFixed(2)}`;
+        }
+        
+        function checkout() {
+            if (Object.keys(cart).length === 0) return;
+            
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate([100, 50, 100]);
+            }
+            
+            // Generate order number and pickup time
+            const orderNumber = Math.floor(Math.random() * 10000) + 1000;
+            const pickupTime = new Date();
+            pickupTime.setMinutes(pickupTime.getMinutes() + 15);
+            
+            document.getElementById('orderNumber').textContent = orderNumber;
+            document.getElementById('pickupTime').textContent = 
+                pickupTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            
+            // Save order to localStorage for persistence
+            localStorage.setItem('lastOrder', JSON.stringify({
+                orderNumber: orderNumber,
+                pickupTime: pickupTime.toISOString(),
+                items: cart,
+                total: cartTotal
+            }));
+            
+            // Clear cart
+            cart = {};
+            cartTotal = 0;
+            
+            showScreen('confirmationScreen');
+        }
+        
+        function newOrder() {
+            updateCartDisplay();
+            showScreen('productsScreen');
+        }
+        
+        function logout() {
+            cart = {};
+            cartTotal = 0;
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            updateCartDisplay();
+            showScreen('loginScreen');
+        }
+        
+        // Prevent zoom on double tap
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+        
+        // Handle back button for app-like navigation
+        window.addEventListener('popstate', function(event) {
+            // Handle browser back button if needed
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96a750a385d992aa',t:'MTc1NDQwNzYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
